@@ -36,7 +36,7 @@ interface Check {
   fileName: string;
   storedFileName: string;
   fileSize: number;
-  priority: string; // Added priority
+  priority: string;
 }
 
 interface FileDetails {
@@ -79,6 +79,7 @@ export default function ChecksPage() {
   const [selectedChecks, setSelectedChecks] = useState<string[]>([]);
   const [checkIdCopied, setCheckIdCopied] = useState<string | null>(null);
   const uploadSectionRef = useRef<HTMLDivElement>(null);
+  const [uploaded, setUploaded] = useState(false);
 
   useEffect(() => {
     const fetchPendingChecks = async () => {
@@ -213,7 +214,7 @@ export default function ChecksPage() {
 
   const isValidClassification = (result: ClassificationResult) => {
     return (
-      (result.type === "AI Detection Report" && result.AI_Detection >= 0) ||
+      (result.type === "AI Detection Report" && result.AI_Detection >= -1) ||
       (result.type === "Plagiarism Report" &&
         result.Overall_Similarity !== null)
     );
@@ -240,7 +241,7 @@ export default function ChecksPage() {
       );
       formData.append(
         `classificationResults[${index}][AI_Detection]`,
-        result.AI_Detection !== null ? result.AI_Detection.toString() : ""
+        result.AI_Detection !== null ? result.AI_Detection.toString() : "-1"
       );
       formData.append(
         `classificationResults[${index}][AI_Detection_Asterisk]`,
@@ -264,7 +265,7 @@ export default function ChecksPage() {
       });
 
       if (response.ok) {
-        toast.success("Files uploaded successfully!");
+        toast.success("Files uploaded successfully with score -1!");
         const updatedChecks = pendingChecks.filter(
           (_, index) => index !== currentCheckIndex
         );
@@ -369,7 +370,7 @@ export default function ChecksPage() {
   const handleCheckIdClick = (checkId: string) => {
     navigator.clipboard.writeText(checkId);
     setCheckIdCopied(checkId);
-    setTimeout(() => setCheckIdCopied(null), 2000); // reset after 2 seconds
+    setTimeout(() => setCheckIdCopied(null), 2000);
   };
 
   const calculateTimeRemaining = (deliveryTime: string) => {
@@ -440,8 +441,6 @@ export default function ChecksPage() {
     const mb = size / (1024 * 1024);
     return mb.toFixed(2) + " MB";
   };
-
-  const [uploaded, setUploaded] = useState(false); // State to manage the uploaded status
 
   return (
     <div
@@ -673,7 +672,7 @@ export default function ChecksPage() {
 
           {/* Confirmation Dialog */}
           <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-            <DialogContent className="sm:max-w-[80%] text-white bg-gray-800 rounded-lg border-red-50 ">
+            <DialogContent className="sm:max-w-[80%] text-white bg-gray-800 rounded-lg border-red-50">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold">
                   Confirm Submission
@@ -851,12 +850,12 @@ export default function ChecksPage() {
                           checked={selectedChecks.includes(check._id)}
                           onChange={() => handleCheckboxChange(check._id)}
                           onClick={(e) => e.stopPropagation()}
-                          className="scale-75" // Make checkbox smaller
+                          className="scale-75"
                         />
                       </td>
                       <td className="py-3 px-3 border-b border-gray-700 text-gray-300 text-center">
                         <span
-                          className={`px-5  py-1 rounded-full ${getPriorityColor(
+                          className={`px-5 py-1 rounded-full ${getPriorityColor(
                             check.priority
                           )}`}
                         >

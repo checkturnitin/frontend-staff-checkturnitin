@@ -89,8 +89,11 @@ export default function MediumPriorityChecksPage() {
           },
         );
 
+
         if (response.ok) {
           const data = await response.json();
+          console.log(data);
+          
           if (data.checks.length > 0) {
             const checksWithStoredFileName = await Promise.all(
               data.checks.map(async (check: Check) => {
