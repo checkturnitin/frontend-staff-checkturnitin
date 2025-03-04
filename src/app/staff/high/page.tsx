@@ -49,7 +49,7 @@ interface FileDetails {
 interface ClassificationResult {
   type: string;
   Overall_Similarity: number | null;
-  AI_Detection: number;
+  AI_Detection: number; // It accepts -1 as an entry for 0-20%
   AI_Detection_Asterisk: boolean;
   Below_Threshold: boolean;
 }
@@ -62,7 +62,6 @@ function formatFileSize(size: number): string {
   return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
-// Main component function
 export default function HighPriorityChecksPage() {
   const [highPriorityChecks, setHighPriorityChecks] = useState<Check[]>([]);
   const [currentCheckIndex, setCurrentCheckIndex] = useState(0);
@@ -75,11 +74,10 @@ export default function HighPriorityChecksPage() {
   const [classificationResults, setClassificationResults] = useState<ClassificationResult[]>([]);
   const [isClassifying, setIsClassifying] = useState(false);
   const [selectedChecks, setSelectedChecks] = useState<string[]>([]);
-  const [checkIdCopied, setCheckIdCopied] = useState<string | null>(null);  
+  const [checkIdCopied, setCheckIdCopied] = useState<string | null>(null);
   const uploadSectionRef = useRef<HTMLDivElement>(null);
-  const [uploaded, setUploaded] = useState(false); // State to manage the uploaded status
+  const [uploaded, setUploaded] = useState(false);
 
-  // Fetch high priority checks
   useEffect(() => {
     const fetchHighPriorityChecks = async () => {
       try {
@@ -141,7 +139,6 @@ export default function HighPriorityChecksPage() {
     }
   }, []);
 
-  // Fetch expected files based on file ID
   const fetchExpectedFiles = async (fileId: string) => {
     setIsLoadingExpectedFiles(true);
     try {
@@ -165,7 +162,6 @@ export default function HighPriorityChecksPage() {
     }
   };
 
-  // Classify PDF using server
   const classifyPDF = async (file: File): Promise<ClassificationResult> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -183,12 +179,11 @@ export default function HighPriorityChecksPage() {
     return result;
   };
 
-  // Handle submit request
   const handleSubmit = async () => {
     if (
-      files.length === 0
-      || files.length > 2
-      || files.some(
+      files.length === 0 ||
+      files.length > 2 ||
+      files.some(
         (file) => !isFileNameValid(file, getExpectedFileNames(expectedFiles[0].storedFileName)),
       )
     ) {
@@ -211,9 +206,8 @@ export default function HighPriorityChecksPage() {
     }
   };
 
-  // Check if the classification result is valid
   const isValidClassification = (result: ClassificationResult) => (
-    (result.type === 'AI Detection Report' && result.AI_Detection >= 0)
+    (result.type === 'AI Detection Report' && result.AI_Detection >= -1)
     || (result.type === 'Plagiarism Report'
       && result.Overall_Similarity !== null)
   );
@@ -221,12 +215,35 @@ export default function HighPriorityChecksPage() {
   const allFilesValidated = classificationResults.length === files.length
     && classificationResults.every(isValidClassification);
 
-  // Confirm the upload
   const confirmUpload = async () => {
     setIsUploading(true);
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file));
     formData.append('checkId', highPriorityChecks[currentCheckIndex]._id);
+
+    classificationResults.forEach((result, index) => {
+      formData.append(`classificationResults[${index}][type]`, result.type);
+      formData.append(
+        `classificationResults[${index}][Overall_Similarity]`,
+        result.Overall_Similarity !== null
+          ? result.Overall_Similarity.toString()
+          : ""
+      );
+      formData.append(
+        `classificationResults[${index}][AI_Detection]`,
+        result.AI_Detection === -1 ? "0-20%" : `${result.AI_Detection}%`
+      );
+      formData.append(
+        `classificationResults[${index}][AI_Detection_Asterisk]`,
+        result.AI_Detection_Asterisk !== null
+          ? result.AI_Detection_Asterisk.toString()
+          : ""
+      );
+      formData.append(
+        `classificationResults[${index}][Below_Threshold]`,
+        result.Below_Threshold !== null ? result.Below_Threshold.toString() : ""
+      );
+    });
 
     try {
       const response = await fetch(`${serverURL}/staff/check`, {
@@ -260,7 +277,6 @@ export default function HighPriorityChecksPage() {
     }
   };
 
-  // Download a specific file
   const handleDownload = async (fileId: string, checkId: string) => {
     setIsDownloading(true);
     try {
@@ -296,7 +312,6 @@ export default function HighPriorityChecksPage() {
     }
   };
 
-  // Bulk download handler
   const handleBulkDownload = async () => {
     if (selectedChecks.length === 0) {
       toast.error('Please select at least one file to download.');
@@ -325,27 +340,23 @@ export default function HighPriorityChecksPage() {
     }
   };
 
-  // Manage selection of checks
   const handleCheckSelection = (index: number) => {
     setCurrentCheckIndex(index);
     fetchExpectedFiles(highPriorityChecks[index].fileId);
   };
 
-  // Manage checkbox state change
   const handleCheckboxChange = (checkId: string) => {
     setSelectedChecks((prev) => (prev.includes(checkId)
       ? prev.filter((id) => id !== checkId)
       : [...prev, checkId]));
   };
 
-  // Handle copying of check IDs
   const handleCheckIdClick = (checkId: string) => {
     navigator.clipboard.writeText(checkId);
     setCheckIdCopied(checkId);
-    setTimeout(() => setCheckIdCopied(null), 2000); // reset after 2 seconds
+    setTimeout(() => setCheckIdCopied(null), 2000);
   };
 
-  // Calculate time remaining
   const calculateTimeRemaining = (deliveryTime: string) => {
     const now = new Date();
     const delivery = new Date(deliveryTime);
@@ -362,8 +373,7 @@ export default function HighPriorityChecksPage() {
     );
     return `${hours}h ${minutes}m`;
   };
-
-  // Calculate progress for progress bar
+  
   const calculateProgress = (deliveryTime: string) => {
     const now = new Date();
     const delivery = new Date(deliveryTime);
@@ -372,7 +382,6 @@ export default function HighPriorityChecksPage() {
     return Math.min(100, Math.max(0, (elapsed / total) * 100));
   };
 
-  // Get progress bar color based on time remaining
   const getProgressColor = (deliveryTime: string) => {
     const timeRemaining = calculateTimeRemaining(deliveryTime);
     if (timeRemaining <= 0) {
@@ -383,7 +392,6 @@ export default function HighPriorityChecksPage() {
     return 'bg-blue-500';
   };
 
-  // Helper to fetch expected file names
   const getExpectedFileNames = (originalFileName: string) => {
     const baseName = originalFileName.replace(/\.[^/.]+$/, '');
     return [
@@ -395,7 +403,6 @@ export default function HighPriorityChecksPage() {
     ];
   };
 
-  // Check if file name is valid
   const isFileNameValid = (file: File, expectedNames: string[]) => expectedNames.includes(file.name);
 
   return (
@@ -415,7 +422,6 @@ export default function HighPriorityChecksPage() {
         </p>
       ) : (
         <div className="space-y-8">
-          {/* Current Check Section */}
           <AnimatePresence>
             <motion.div
               key={highPriorityChecks[currentCheckIndex]._id}
@@ -484,7 +490,6 @@ export default function HighPriorityChecksPage() {
             </motion.div>
           </AnimatePresence>
 
-          {/* Expected Upload Files Section */}
           <div ref={uploadSectionRef} className="bg-gray-900 p-6 rounded-lg">
             <h2 className="text-lg font-bold mb-4">Expected Upload Files</h2>
             {isLoadingExpectedFiles ? (
@@ -529,7 +534,6 @@ export default function HighPriorityChecksPage() {
             )}
           </div>
 
-          {/* File Upload Section */}
           <div className="bg-gray-900 p-6 rounded-lg">
             <FileUpload
               onChange={(files) => setFiles(files)}
@@ -582,7 +586,6 @@ export default function HighPriorityChecksPage() {
             </div>
           </div>
 
-          {/* Submit Button */}
           <div className="text-center mt-8">
             <Button
               onClick={handleSubmit}
@@ -610,7 +613,6 @@ export default function HighPriorityChecksPage() {
             </Button>
           </div>
 
-          {/* Confirmation Dialog */}
           <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
             <DialogContent className="sm:max-w-[80%] text-white bg-gray-800 rounded-lg border-red-50 ">
               <DialogHeader>
@@ -735,7 +737,6 @@ export default function HighPriorityChecksPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Pending Queue Section */}
           <div className="bg-gray-900 p-6 rounded-lg">
             <h3 className="text-lg font-bold mb-4">Pending Queue</h3>
             <div className="overflow-x-auto">
@@ -796,12 +797,12 @@ export default function HighPriorityChecksPage() {
                           checked={selectedChecks.includes(check._id)}
                           onChange={() => handleCheckboxChange(check._id)}
                           onClick={(e) => e.stopPropagation()}
-                          className="scale-75" // Make checkbox smaller
+                          className="scale-75"
                         />
                       </td>
                       <td className="py-3 px-3 border-b border-gray-700 text-gray-300 text-center">
                         <span
-                          className={`px-2 py-1 rounded-full bg-red-600 text-white`} // Hardcoded as high priority
+                          className={`px-2 py-1 rounded-full bg-red-600 text-white`}
                         >
                           High
                         </span>

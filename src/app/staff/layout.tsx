@@ -93,6 +93,16 @@ export default function RootLayout({
       label: "Low Priority Checks",
     },
     {
+      href: "/staff/compeleted",
+      icon: FiCreditCard,
+      label: "Completed Checks",
+    },
+    {
+      href: "/staff/failed",
+      icon: FiCreditCard,
+      label: "Fail a check",
+    },
+    {
       href: "/staff/checks/searchchecks",
       icon: IoIosStats,
       label: "Search Checks",

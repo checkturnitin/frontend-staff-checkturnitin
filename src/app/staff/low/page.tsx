@@ -36,7 +36,7 @@ interface Check {
   fileName: string;
   storedFileName: string;
   fileSize: number;
-  priority: string; // Priority field added
+  priority: string;
 }
 
 interface FileDetails {
@@ -58,7 +58,7 @@ interface FileDetails {
 interface ClassificationResult {
   type: string;
   Overall_Similarity: number | null;
-  AI_Detection: number;
+  AI_Detection: number; // Accept -1 for 0-20%
   AI_Detection_Asterisk: boolean;
   Below_Threshold: boolean;
 }
@@ -121,7 +121,7 @@ export default function LowPriorityChecksPage() {
                       ? fileData.file.storedFileName
                       : 'Unknown',
                     fileSize: fileData.file ? fileData.file.fileSize : 1,
-                    priority: "Low", // Assign low priority
+                    priority: "Low",
                   };
                 }
                 return {
@@ -216,7 +216,7 @@ export default function LowPriorityChecksPage() {
   };
 
   const isValidClassification = (result: ClassificationResult) => (
-    (result.type === 'AI Detection Report' && result.AI_Detection >= 0)
+    (result.type === 'AI Detection Report' && result.AI_Detection >= -1)
     || (result.type === 'Plagiarism Report'
       && result.Overall_Similarity !== null)
   );
@@ -229,6 +229,30 @@ export default function LowPriorityChecksPage() {
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file));
     formData.append('checkId', lowPriorityChecks[currentCheckIndex]._id);
+
+    classificationResults.forEach((result, index) => {
+      formData.append(`classificationResults[${index}][type]`, result.type);
+      formData.append(
+        `classificationResults[${index}][Overall_Similarity]`,
+        result.Overall_Similarity !== null
+          ? result.Overall_Similarity.toString()
+          : ""
+      );
+      formData.append(
+        `classificationResults[${index}][AI_Detection]`,
+        result.AI_Detection === -1 ? "0-20%" : `${result.AI_Detection}%`
+      );
+      formData.append(
+        `classificationResults[${index}][AI_Detection_Asterisk]`,
+        result.AI_Detection_Asterisk !== null
+          ? result.AI_Detection_Asterisk.toString()
+          : ""
+      );
+      formData.append(
+        `classificationResults[${index}][Below_Threshold]`,
+        result.Below_Threshold !== null ? result.Below_Threshold.toString() : ""
+      );
+    });
 
     try {
       const response = await fetch(`${serverURL}/staff/check`, {
@@ -339,7 +363,7 @@ export default function LowPriorityChecksPage() {
   const handleCheckIdClick = (checkId: string) => {
     navigator.clipboard.writeText(checkId);
     setCheckIdCopied(checkId);
-    setTimeout(() => setCheckIdCopied(null), 2000); 
+    setTimeout(() => setCheckIdCopied(null), 2000);
   };
 
   const calculateTimeRemaining = (deliveryTime: string) => {
@@ -407,7 +431,6 @@ export default function LowPriorityChecksPage() {
         </p>
       ) : (
         <div className="space-y-8">
-          {/* Current Check Section */}
           <AnimatePresence>
             <motion.div
               key={lowPriorityChecks[currentCheckIndex]._id}
@@ -476,7 +499,6 @@ export default function LowPriorityChecksPage() {
             </motion.div>
           </AnimatePresence>
 
-          {/* Expected Upload Files Section */}
           <div ref={uploadSectionRef} className="bg-gray-900 p-6 rounded-lg">
             <h2 className="text-lg font-bold mb-4">Expected Upload Files</h2>
             {isLoadingExpectedFiles ? (
@@ -521,7 +543,6 @@ export default function LowPriorityChecksPage() {
             )}
           </div>
 
-          {/* File Upload Section */}
           <div className="bg-gray-900 p-6 rounded-lg">
             <FileUpload
               onChange={(files) => setFiles(files)}
@@ -574,7 +595,6 @@ export default function LowPriorityChecksPage() {
             </div>
           </div>
 
-          {/* Submit Button */}
           <div className="text-center mt-8">
             <Button
               onClick={handleSubmit}
@@ -602,7 +622,6 @@ export default function LowPriorityChecksPage() {
             </Button>
           </div>
 
-          {/* Confirmation Dialog */}
           <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
             <DialogContent className="sm:max-w-[80%] text-white bg-gray-800 rounded-lg border-red-50 ">
               <DialogHeader>
@@ -727,7 +746,6 @@ export default function LowPriorityChecksPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Pending Queue Section */}
           <div className="bg-gray-900 p-6 rounded-lg">
             <h3 className="text-lg font-bold mb-4">Pending Queue</h3>
             <div className="overflow-x-auto">
@@ -793,7 +811,7 @@ export default function LowPriorityChecksPage() {
                       </td>
                       <td className="py-3 px-3 border-b border-gray-700 text-gray-300 text-center">
                         <span
-                          className={`px-2 py-1 rounded-full bg-gray-500 text-white`} // Low priority with gray color
+                          className={`px-2 py-1 rounded-full bg-gray-500 text-white`}
                         >
                           Low
                         </span>
