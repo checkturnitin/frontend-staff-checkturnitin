@@ -98,6 +98,11 @@ export default function RootLayout({
       label: "Completed Checks",
     },
     {
+      href: "/staff/failed",
+      icon: FiCreditCard,
+      label: "Fail a check",
+    },
+    {
       href: "/staff/checks/searchchecks",
       icon: IoIosStats,
       label: "Search Checks",
