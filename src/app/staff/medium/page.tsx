@@ -58,7 +58,7 @@ interface FileDetails {
 interface ClassificationResult {
   type: string;
   Overall_Similarity: number | null;
-  AI_Detection: number; // It accepts -1 as an entry for 0-20% 
+  AI_Detection: number; // It accepts -1 as an entry for 0-20%
   AI_Detection_Asterisk: boolean;
   Below_Threshold: boolean;
 }
@@ -240,7 +240,7 @@ export default function ChecksPage() {
       );
       formData.append(
         `classificationResults[${index}][AI_Detection]`,
-        result.AI_Detection === -1 ? "0-20%": `${result.AI_Detection}%`
+        result.AI_Detection === -1 ? "0-20%" : `${result.AI_Detection}%`
       );
       formData.append(
         `classificationResults[${index}][AI_Detection_Asterisk]`,
@@ -304,11 +304,14 @@ export default function ChecksPage() {
         const blob = await response.blob();
         const fileName =
           response.headers.get("X-File-Name") || "downloaded_file";
+
+        const fileExtension = response.headers.get("x-file-extension") || "pdf";
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
-        a.download = `${fileName}.pdf`;
+        a.download = `${fileName}.${fileExtension}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

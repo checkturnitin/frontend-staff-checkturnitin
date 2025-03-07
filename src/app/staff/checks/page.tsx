@@ -260,6 +260,7 @@ export default function ChecksPage() {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "multipart/form-data",
         },
         body: formData,
       });
@@ -303,14 +304,18 @@ export default function ChecksPage() {
       });
 
       if (response.ok) {
+        console.log(response.headers)
         const blob = await response.blob();
         const fileName =
           response.headers.get("X-File-Name") || "downloaded_file";
+
+        const fileExtension = response.headers.get("X-File-Extension") || "pdf";
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
-        a.download = `${fileName}.pdf`;
+        a.download = `${fileName}.${fileExtension}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
