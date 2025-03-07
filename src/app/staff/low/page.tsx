@@ -301,11 +301,13 @@ export default function LowPriorityChecksPage() {
       if (response.ok) {
         const blob = await response.blob();
         const fileName = response.headers.get('X-File-Name') || 'downloaded_file';
+        const fileExtension = response.headers.get("x-file-extension") || "pdf";
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `${fileName}.pdf`;
+        a.download = `${fileName}.${fileExtension}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
