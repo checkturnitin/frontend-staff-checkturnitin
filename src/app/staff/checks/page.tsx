@@ -203,6 +203,8 @@ export default function ChecksPage() {
     try {
       const classificationPromises = files.map((file) => classifyPDF(file));
       const results = await Promise.all(classificationPromises);
+      console.log(results);
+      
       setClassificationResults(results);
     } catch (error) {
       console.error("Error classifying files:", error);
