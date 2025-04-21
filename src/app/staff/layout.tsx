@@ -103,10 +103,20 @@ export default function RootLayout({
       label: "Fail a check",
     },
     {
-      href: "/staff/checks/searchchecks",
-      icon: IoIosStats,
-      label: "Search Checks",
+      href: "/staff/stats",
+      icon: FiCreditCard,
+      label: "Check Status",
     },
+    {
+      href: "/staff/ongoing",
+      icon: FiCreditCard,
+      label: "Ongoing Checks",
+    },
+   // {
+   //   href: "/staff/checks/searchchecks",
+   //   icon: IoIosStats,
+   //   label: "Search Checks",
+   // },
     {
       href: "/staff/mystat",
       icon: IoIosStats,
